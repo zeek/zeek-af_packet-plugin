@@ -1,0 +1,4 @@
+[package]
+description = This plugin provides native AF_Packet support for Bro.
+tags = bro plugin, broctl plugin, packet source, af_packet
+build_command = ./configure --bro-dist=%(bro_dist)s && make
