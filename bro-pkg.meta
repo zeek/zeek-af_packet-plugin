@@ -1,7 +1,6 @@
 [package]
 description = This plugin provides native AF_Packet support for Bro.
 tags = bro plugin, broctl plugin, packet source, af_packet
-script_dir = scripts
 plugin_dir = build
 build_command = ./configure --bro-dist=%(bro_dist)s && make
 test_command = cd tests && btest -d
