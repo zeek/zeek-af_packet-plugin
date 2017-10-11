@@ -9,9 +9,15 @@
 #                            kernel sources if the module has problems finding
 #                            the proper path.
 #
+#  KERNELHEADERS_LATEST      Set this option ON to use the latest kernel
+#                            headers available on the system.
+#
 # Variables defined by this module:
 #
 #  KERNELHEADERS_FOUND         System has kernel headers.
+
+# Define latest-headers-switch as cache variable
+set(KERNELHEADERS_LATEST OFF CACHE BOOL "use latest kernel headers")
 
 # Search paths:
 set(KERNEL_PATHS
@@ -19,24 +25,24 @@ set(KERNEL_PATHS
   /usr/src/kernels/
 )
 
-# Find the kernel release
-execute_process(
-  COMMAND uname -r
-  OUTPUT_VARIABLE KERNEL_RELEASE
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+if ( NOT KERNELHEADERS_LATEST )
+	# Find the kernel release
+	execute_process(
+	  COMMAND uname -r
+	  OUTPUT_VARIABLE KERNEL_RELEASE
+	  OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
 
-foreach ( KERNEL_PATH ${KERNEL_PATHS} )
-	list(APPEND KERNEL_RELEASE_PATHS "${KERNEL_PATH}${KERNEL_RELEASE}")
-endforeach (KERNEL_PATH)
+	foreach ( KERNEL_PATH ${KERNEL_PATHS} )
+		list(APPEND KERNEL_RELEASE_PATHS "${KERNEL_PATH}${KERNEL_RELEASE}")
+	endforeach (KERNEL_PATH)
 
-find_path(KERNELHEADERS_ROOT_DIR
-  NAMES include/linux/user.h
-  PATHS ${KERNEL_RELEASE_PATHS}
-)
-
-# Fallback to non-release header versions
-if ( NOT KERNELHEADERS_ROOT_DIR )
+	find_path(KERNELHEADERS_ROOT_DIR
+	  NAMES include/linux/user.h
+	  PATHS ${KERNEL_RELEASE_PATHS}
+	)
+else ()
+	# Use latest header version
 	foreach ( KERNEL_PATH ${KERNEL_PATHS} )
 		# Search for any installed headers
 		file(GLOB KERNELS_AVAILABLE "${KERNEL_PATH}*")
@@ -45,17 +51,14 @@ if ( NOT KERNELHEADERS_ROOT_DIR )
 			# Get the newest kernel
 			list(SORT KERNELS_AVAILABLE)
 			list(REVERSE KERNELS_AVAILABLE)
-			list(GET KERNELS_AVAILABLE 0 KERNEL_FALLBACK)
+			list(GET KERNELS_AVAILABLE 0 KERNEL_LATEST_PATH)
 
 			find_path(KERNELHEADERS_ROOT_DIR
 			  NAMES include/linux/user.h
-			  PATHS ${KERNEL_FALLBACK}
+			  PATHS ${KERNEL_LATEST_PATH}
 			)
 
 			if ( KERNELHEADERS_ROOT_DIR )
-				message(WARNING "No headers found that match the running "
-				  "kernel version: Using fallback kernel headers instead."
-				)
 				break ()
 			endif ()
 		endif ()
