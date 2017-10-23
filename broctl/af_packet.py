@@ -19,7 +19,7 @@ class AF_Packet(BroControl.plugin.Plugin):
 		return False
 
 	def nodeKeys(self):
-		return ["fanout_id", "fanout_mode"]
+		return ["fanout_id", "fanout_mode", "buffer_size"]
 
 	def broctl_config(self):
 		script = ""
@@ -29,12 +29,16 @@ class AF_Packet(BroControl.plugin.Plugin):
 			if nn.type != "worker" or not nn.lb_procs:
 				continue
 
-			if nn.af_packet_fanout_id or nn.af_packet_fanout_mode:
-				script += "\n@if( peer_description == \"%s\" )" % nn.name
-				if nn.af_packet_fanout_id:
-					script += "\n  redef AF_Packet::fanout_id = %s;" % nn.af_packet_fanout_id
-				if nn.af_packet_fanout_mode:
-					script += "\n  redef AF_Packet::fanout_mode = %s;" % nn.af_packet_fanout_mode
-				script += "\n@endif"
+			params = ""
+
+			if nn.af_packet_fanout_id:
+				params += "\n  redef AF_Packet::fanout_id = %s;" % nn.af_packet_fanout_id
+			if nn.af_packet_fanout_mode:
+				params += "\n  redef AF_Packet::fanout_mode = %s;" % nn.af_packet_fanout_mode
+			if nn.af_packet_buffer_size:
+				params += "\n  redef AF_Packet::buffer_size = %s;" % nn.af_packet_buffer_size
+
+			if params:
+				script += "\n@if( peer_description == \"%s\" ) %s\n@endif" % (nn.name, params)
 
 		return script
