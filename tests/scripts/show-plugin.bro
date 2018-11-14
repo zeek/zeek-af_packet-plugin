@@ -1,2 +1,2 @@
-# @TEST-EXEC: bro -NN Bro::AF_Packet > output
+# @TEST-EXEC: bro -NN Bro::AF_Packet |sed -e 's/version.*)/version)/g' > output
 # @TEST-EXEC: btest-diff output
