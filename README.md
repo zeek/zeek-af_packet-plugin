@@ -5,14 +5,12 @@ Bro::AF_Packet
 This plugin provides native AF_Packet support
 (http://man7.org/linux/man-pages/man7/packet.7.html) for Bro.
 
-Installation
-------------
+# Installation
 
 Before installing the plugin, make sure the kernel headers are installed and your
 kernel supports PACKET_FANOUT [1]_ and TPACKET_V3.
 
-Bro Package Manager
-```````````````````
+## Bro Package Manager
 The plugin is available as package for the `Bro Package Manager
 <https://github.com/bro/package-manager>`_ and can be installed using the
 following command::
@@ -23,13 +21,23 @@ To install uncompiled plugins, Bro's source code must be available to the packag
 (see package manager's `documentation <http://bro-package-manager.readthedocs.io/en/
 stable/quickstart.html#basic-configuration>`_ for more information).
 
-Manual Install
-``````````````
+## Manual Install
+In order to build this module you will have to compile it against the bro source
+code and some of the built bro modules. See https://www.bro.org/sphinx/install/install.html
+and follow the instructions for installing from source. 
+Note: You do not need to run make install, you only need to run `./configure && make`
+in order to build
+the required bro plugins. You know you have done it correctly when the bro/cmake
+folder has populated with the BroPlugin.cmake file.
+
 The following will compile and
 install the AF_Packet plugin alongside Bro, assuming it can find the
-kernel headers in a standard location::
+kernel headers in a standard location:
 
     # ./configure && make && make install
+
+On RHEL systems you can install headers with `yum install -y kernel-devel` and
+on Debian you can install with `sudo apt-get install -y linux-headers-$(uname -r)`.
 
 If the headers are installed somewhere non-standard, add
 ``--with-kernel=<kernel-header-directory>`` to the ``configure`` command. Furthermore,
@@ -52,8 +60,7 @@ correctly, you should see this::
    https://github.com/JustinAzoff/can-i-use-afpacket-fanout can be used to verify
    whether PACKET_FANOUT works as expected.
 
-Usage
------
+# Usage
 
 Once installed, you can use AF_Packet interfaces/ports by prefixing them
 with ``af_packet::`` on the command line. For example, to use AF_Packet
@@ -75,8 +82,7 @@ interface entered promiscuous mode you can use ``dmesg``.
 To adapt the plugin to your needs, you can set a couple of parameters like
 buffer size. See scripts/init.bro for the default values.
 
-Usage with ``broctl``
----------------------
+# Usage with `broctl`
 
 To use the AF_Packet plugin with ``broctl``, the ``custom`` load balance method can
 be utilized. The following shows an exemplary configuration::
@@ -106,8 +112,7 @@ prefix can be globally definied by adding the following line to ``broctl.conf``:
 
   lb_custom.InterfacePrefix=af_packet::
 
-Limitations
------------
+# Limitations
 
 * Even using AF_Packet's ``ETH_P_ALL``, the kernel removes VLAN tags. While the tags
   are provided spereately, there is no efficient way to pass them to Bro.

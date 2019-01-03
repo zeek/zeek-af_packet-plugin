@@ -94,6 +94,7 @@ if [ ! -e "$brodist/bro-path-dev.in" ]; then
 fi
 
 append_cache_entry BRO_DIST PATH $brodist
+append_cache_entry CMAKE_MODULE_PATH PATH $(pwd)/cmake
 append_cache_entry CMAKE_MODULE_PATH PATH $brodist/cmake
 
 if [ "$installroot" != "default" ]; then
