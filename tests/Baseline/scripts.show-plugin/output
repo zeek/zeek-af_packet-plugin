@@ -1,4 +1,4 @@
-Bro::AF_Packet - Packet acquisition via AF_Packet (dynamic, version)
+Zeek::AF_Packet - Packet acquisition via AF_Packet (dynamic, version)
     [Packet Source] AF_PacketReader (interface prefix "af_packet"; supports live input)
     [Type] AF_Packet::FanoutMode
     [Constant] AF_Packet::buffer_size
