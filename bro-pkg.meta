@@ -1,9 +1,0 @@
-[package]
-description = This plugin provides native AF_Packet support for Bro.
-tags = bro plugin, broctl plugin, packet source, af_packet
-plugin_dir = build/Bro_AF_Packet.tgz
-build_command = ./configure && make
-test_command = cd tests && btest -d
-depends =
-  bro-pkg >=1.2
-  bro >=2.5.0

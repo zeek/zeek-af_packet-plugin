@@ -1,6 +1,6 @@
-import BroControl.plugin
+import ZeekControl.plugin
 
-class AF_Packet(BroControl.plugin.Plugin):
+class AF_Packet(ZeekControl.plugin.Plugin):
 	def __init__(self):
 		super(AF_Packet, self).__init__(apiversion=1)
 
@@ -21,7 +21,7 @@ class AF_Packet(BroControl.plugin.Plugin):
 	def nodeKeys(self):
 		return ["fanout_id", "fanout_mode", "buffer_size"]
 
-	def broctl_config(self):
+	def zeekctl_config(self):
 		script = ""
 
 		# Add custom configuration values per worker.
