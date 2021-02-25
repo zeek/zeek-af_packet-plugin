@@ -1,12 +1,12 @@
 
-#include "zeek-config.h"
+#include "zeek/zeek-config.h"
 
 #include "AF_Packet.h"
 #include "RX_Ring.h"
 
 #include "af_packet.bif.h"
 
-using namespace iosource::pktsrc;
+using namespace zeek::iosource::pktsrc;
 
 AF_PacketSource::~AF_PacketSource()
 	{
@@ -294,7 +294,7 @@ void AF_PacketSource::Statistics(Stats* s)
 	memcpy(s, &stats, sizeof(Stats));
 	}
 
-iosource::PktSrc* AF_PacketSource::InstantiateAF_Packet(const std::string& path, bool is_live)
+zeek::iosource::PktSrc* AF_PacketSource::InstantiateAF_Packet(const std::string& path, bool is_live)
 	{
 	return new AF_PacketSource(path, is_live);
 	}

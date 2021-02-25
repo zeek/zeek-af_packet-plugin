@@ -20,11 +20,10 @@ extern "C" {
 #include <pcap.h>
 }
 
-#include "iosource/PktSrc.h"
+#include "zeek/iosource/PktSrc.h"
 #include "RX_Ring.h"
 
-namespace iosource {
-namespace pktsrc {
+namespace zeek::iosource::pktsrc {
 
 class AF_PacketSource : public iosource::PktSrc {
 public:
@@ -74,7 +73,6 @@ private:
 	uint32_t GetFanoutMode(bool defrag=false);
 };
 
-}
 }
 
 #endif
