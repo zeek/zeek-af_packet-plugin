@@ -82,6 +82,11 @@ interface entered promiscuous mode you can use ``dmesg``.
 To adapt the plugin to your needs, you can set a couple of parameters like
 buffer size. See scripts/init.zeek for the default values.
 
+Note: Remember to disable offloading features of your Network Interface Card
+(NIC) that interfere with Zeek (see `blog post
+<https://blog.securityonion.net/2011/10/when-is-full-packet-capture-not-full.html>`_
+).
+
 Usage with ``zeekctl``
 ---------------------
 
@@ -113,6 +118,28 @@ AF_Packet, the prefix can be globally definied by adding the following
 line to ``zeekctl.conf``::
 
   lb_custom.InterfacePrefix=af_packet::
+
+Performance Tuning
+------------------
+
+State of the art Network Interface Cards (NICs) such as Intel X710 provide
+hardware support for load balancing. Passively monitoring traffic with Zeek
+requires traffic from A to B as well as from B to A to arrive at the same
+worker to reconstruct connections. Hence, the hash used for load balancing,
+must be symmetric. By default symmetric hash
+
+    INF=ens2
+
+    ethtool -L $INF combined 8
+    ethtool -K $INF rxhash on
+    ethtool -K $INF ntuple on
+    set_irq_affinity 8-15 $INF # script ships with the i40e driver
+    ethtool -X $INF hkey 6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A:6D:5A equal 8
+    ethtool -A $INF rx off tx off
+    ethtool -C $INF adaptive-rx off adaptive-tx off rx-usecs 125
+    ethtool -G $INF rx 1024
+    for i in rx tx tso ufo gso gro lro tx nocache copy sg txvlan rxvlan; do ethtool -K $INF $i off; done
+    for proto in tcp4 udp4 tcp6 udp6; do ethtool -N $INF rx-flow-hash $proto sdfn; done
 
 Limitations
 -----------
