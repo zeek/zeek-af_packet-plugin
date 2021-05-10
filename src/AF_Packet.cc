@@ -184,8 +184,16 @@ inline uint32_t AF_PacketSource::GetFanoutMode(bool defrag)
 	switch ( zeek::BifConst::AF_Packet::fanout_mode->AsEnum() ) {
 		case BifEnum::AF_Packet::FANOUT_CPU: fanout_mode = PACKET_FANOUT_CPU;
 			break;
-	#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
+	#ifdef PACKET_FANOUT_QM
 		case BifEnum::AF_Packet::FANOUT_QM: fanout_mode = PACKET_FANOUT_QM;
+			break;
+	#endif
+	#ifdef PACKET_FANOUT_CBPF
+		case BifEnum::AF_Packet::FANOUT_CBPF: fanout_mode = PACKET_FANOUT_CBPF;
+			break;
+	#endif
+	#ifdef PACKET_FANOUT_EBPF
+		case BifEnum::AF_Packet::FANOUT_EBPF: fanout_mode = PACKET_FANOUT_EBPF;
 			break;
 	#endif
 		default: fanout_mode = PACKET_FANOUT_HASH;
