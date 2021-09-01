@@ -7,4 +7,4 @@ build_command = ./configure && make
 test_command = cd tests && btest -d
 depends =
   zkg >=2.0
-  zeek >=3.0.0
+  zeek >=4.0.0
