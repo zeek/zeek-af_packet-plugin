@@ -1,7 +1,7 @@
 [package]
 description = This plugin provides native AF_Packet support for Zeek.
 tags = zeek plugin, zeekctl plugin, packet source, af_packet
-script_dir = scripts
+script_dir = scripts/af_packet
 plugin_dir = build/Zeek_AF_Packet.tgz
 build_command = ./configure && make
 test_command = cd tests && btest -d
