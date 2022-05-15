@@ -246,6 +246,9 @@ bool AF_PacketSource::ExtractNextPacket(zeek::Packet* pkt)
 
 		pkt->Init(props.link_type, &current_hdr.ts, current_hdr.caplen, current_hdr.len, data);
 
+		if ( packet->tp_status & TP_STATUS_VLAN_VALID )
+			pkt->vlan = packet->hv1.tp_vlan_tci;
+
 		if ( current_hdr.len == 0 || current_hdr.caplen == 0 )
 			{
 			Weird("empty_af_packet_header", pkt);
