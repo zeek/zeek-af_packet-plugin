@@ -26,6 +26,7 @@ AF_PacketSource::AF_PacketSource(const std::string& path, bool is_live)
 void AF_PacketSource::Open()
 	{
 	uint64_t buffer_size = zeek::BifConst::AF_Packet::buffer_size;
+	int link_type = zeek::BifConst::AF_Packet::link_type;
 	bool enable_hw_timestamping = zeek::BifConst::AF_Packet::enable_hw_timestamping;
 	bool enable_fanout = zeek::BifConst::AF_Packet::enable_fanout;
 	bool enable_defrag = zeek::BifConst::AF_Packet::enable_defrag;
@@ -79,7 +80,7 @@ void AF_PacketSource::Open()
 	props.netmask = NETMASK_UNKNOWN;
 	props.selectable_fd = socket_fd;
 	props.is_live = true;
-	props.link_type = DLT_EN10MB; // Ethernet headers
+	props.link_type = link_type;
 
 	stats.received = stats.dropped = stats.link = stats.bytes_received = 0;
 	num_discarded = 0;
