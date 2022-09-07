@@ -1,0 +1,18 @@
+name: Build the plugin using zeekurity images
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - zeekurity/zeek:lts
+          - zeekurity/zeek:latest
+          - zeekurity/zeek-dev:latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build with {{ matrix.image }}
+      run: docker build --build-arg IMAGE=${{ matrix.image }} -f Dockerfile .
