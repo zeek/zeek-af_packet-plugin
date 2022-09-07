@@ -3,8 +3,6 @@
 
 plugin_usage() {
     cat <<EOF
-    --with-kernel=DIR          Path to kernel sources
-    --with-latest-kernel       Use latest kernel sources available
 EOF
 }
 
@@ -12,12 +10,12 @@ plugin_option() {
 
     case "$1" in
         --with-kernel=*)
-            append_cache_entry KERNELHEADERS_ROOT_DIR PATH $optarg
+            echo "WARNING: The --with-kernel option has no effect and will be removed in the future." >&2
             return 0
             ;;
 
         --with-latest-kernel*)
-            append_cache_entry KERNELHEADERS_LATEST BOOL ON
+            echo "WARNING: The --with-latest-kernel option has no effect and will be removed in the future." >&2
             return 0
             ;;
 
