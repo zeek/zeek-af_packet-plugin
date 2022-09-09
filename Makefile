@@ -4,6 +4,7 @@
 
 cmake_build_dir=build
 arch=`uname -s | tr A-Z a-z`-`uname -m`
+docker?=docker
 
 all: build-it
 
@@ -27,3 +28,6 @@ distclean:
 
 test:
 	if [ -f build/lib/Zeek-* ]; then make -C tests; else echo "Plugin not built."; fi
+
+check:
+	$(docker) build -t zeek-af_packet-plugin-check -f ./Dockerfile .
