@@ -226,7 +226,6 @@ bool AF_PacketSource::ExtractNextPacket(zeek::Packet* pkt)
 
 	struct tpacket3_hdr *packet = 0;
 	const u_char *data;
-	struct timeval ts;
 	while ( true )
 		{
 		if ( ! rx_ring->GetNextPacket(&packet) )
