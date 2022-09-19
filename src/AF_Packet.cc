@@ -63,7 +63,7 @@ void AF_PacketSource::Open()
 		return;
 		}
 
-	if ( ! ConfigureFanoutGroup(enable_fanout) )
+	if ( ! ConfigureFanoutGroup(enable_fanout, enable_defrag) )
 		{
 		Error(errno ? strerror(errno) : "failed to join fanout group");
 		close(socket_fd);
@@ -226,7 +226,6 @@ bool AF_PacketSource::ExtractNextPacket(zeek::Packet* pkt)
 
 	struct tpacket3_hdr *packet = 0;
 	const u_char *data;
-	struct timeval ts;
 	while ( true )
 		{
 		if ( ! rx_ring->GetNextPacket(&packet) )
