@@ -175,8 +175,8 @@ if [ "$installroot" != "default" ]; then
     append_cache_entry BRO_PLUGIN_INSTALL_ROOT PATH $installroot
 fi
 
-echo "Build Directory              : $builddir"
-echo "Zeek Source Directory        : $zeekdist"
+echo "Build Directory         : $builddir"
+echo "Zeek Source Directory   : $zeekdist"
 
 mkdir -p $builddir
 cd $builddir

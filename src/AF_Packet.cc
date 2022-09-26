@@ -22,7 +22,7 @@ AF_PacketSource::AF_PacketSource(const std::string& path, bool is_live)
 	props.path = path;
 	props.is_live = is_live;
 
-	checksum_mode = zeek::BifConst::AF_Packet::checksum_offloading_mode->AsEnum();
+	checksum_mode = zeek::BifConst::AF_Packet::checksum_validation_mode->AsEnum();
 	}
 
 void AF_PacketSource::Open()
@@ -281,8 +281,6 @@ bool AF_PacketSource::ExtractNextPacket(zeek::Packet* pkt)
 				break;
 				}
 			}
-#else
-		fprintf(stderr, "bad version?\n");
 #endif
 
 		if ( current_hdr.len == 0 || current_hdr.caplen == 0 )
