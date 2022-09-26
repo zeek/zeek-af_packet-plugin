@@ -13,10 +13,12 @@ export {
 	const enable_fanout = T &redef;
 	## Toggle defragmentation of IP packets using PACKET_FANOUT_FLAG_DEFRAG.
 	const enable_defrag = F &redef;
-	## Fanout Mode.
+	## Fanout mode.
 	const fanout_mode = FANOUT_HASH &redef;
 	## Fanout ID.
 	const fanout_id = 23 &redef;
 	## Link type (default Ethernet).
 	const link_type = 1 &redef;
+	## Checksum validation mode.
+	const checksum_validation_mode: ChecksumMode = CHECKSUM_ON &redef;
 }

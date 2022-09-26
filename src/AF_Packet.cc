@@ -21,12 +21,15 @@ AF_PacketSource::AF_PacketSource(const std::string& path, bool is_live)
 	current_filter = -1;
 	props.path = path;
 	props.is_live = is_live;
+
+	checksum_mode = zeek::BifConst::AF_Packet::checksum_validation_mode->AsEnum();
 	}
 
 void AF_PacketSource::Open()
 	{
 	uint64_t buffer_size = zeek::BifConst::AF_Packet::buffer_size;
 	int link_type = zeek::BifConst::AF_Packet::link_type;
+
 	bool enable_hw_timestamping = zeek::BifConst::AF_Packet::enable_hw_timestamping;
 	bool enable_fanout = zeek::BifConst::AF_Packet::enable_fanout;
 	bool enable_defrag = zeek::BifConst::AF_Packet::enable_defrag;
@@ -248,6 +251,37 @@ bool AF_PacketSource::ExtractNextPacket(zeek::Packet* pkt)
 
 		if ( packet->tp_status & TP_STATUS_VLAN_VALID )
 			pkt->vlan = packet->hv1.tp_vlan_tci;
+
+#if ZEEK_VERSION_NUMBER >= 50100
+		switch ( checksum_mode )
+			{
+			case BifEnum::AF_Packet::CHECKSUM_OFF:
+				{
+				// If set to off, just accept whatever checksum in the packet is correct and
+				// skip checking it here and in Zeek.
+				pkt->l4_checksummed = true;
+				break;
+				}
+			case BifEnum::AF_Packet::CHECKSUM_KERNEL:
+				{
+				// If set to kernel, check whether the kernel thinks the checksum is valid. If it
+				// does, tell Zeek to skip checking by itself.
+				if ( ( (packet->tp_status & TP_STATUS_CSUM_VALID) != 0 ) ||
+				     ( (packet->tp_status & TP_STATUS_CSUMNOTREADY) != 0 ) )
+					pkt->l4_checksummed = true;
+				else
+					pkt->l4_checksummed = false;
+				break;
+				}
+			case BifEnum::AF_Packet::CHECKSUM_ON:
+			default:
+				{
+				// Let Zeek handle it.
+				pkt->l4_checksummed = false;
+				break;
+				}
+			}
+#endif
 
 		if ( current_hdr.len == 0 || current_hdr.caplen == 0 )
 			{
