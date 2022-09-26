@@ -4,6 +4,8 @@ Zeek::AF_Packet - Packet acquisition via AF_Packet (dynamic, version)
     [Type] AF_Packet::FanoutMode
     [Type] AF_Packet::ChecksumMode
     [Constant] AF_Packet::buffer_size
+    [Constant] AF_Packet::block_size
+    [Constant] AF_Packet::block_timeout
     [Constant] AF_Packet::enable_hw_timestamping
     [Constant] AF_Packet::enable_defrag
     [Constant] AF_Packet::enable_fanout
