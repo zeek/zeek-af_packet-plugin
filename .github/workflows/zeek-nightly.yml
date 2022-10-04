@@ -11,6 +11,7 @@ jobs:
       - uses: zeek/action-zkg-install@v1.2
         with:
           pkg: ${{ github.server_url }}/${{ github.repository }}
+          pkg_version: master
           zeek_version: 'zeek-nightly'
       - uses: actions/upload-artifact@v2
         if: failure()
