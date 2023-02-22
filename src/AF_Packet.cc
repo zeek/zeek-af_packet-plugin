@@ -1,6 +1,13 @@
 
 #include "zeek/zeek-config.h"
 
+// Very recent Zeek versions do not provide ZEEK_VERSION_NUMBER through
+// zeek-config.h when compiled as included/builtin/static plugin. These
+// are required to explicitly include zeek/zeek-version.h.
+#ifndef ZEEK_VERSION_NUMBER
+#include "zeek/zeek-version.h"
+#endif
+
 #include "AF_Packet.h"
 #include "RX_Ring.h"
 
