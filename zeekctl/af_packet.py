@@ -19,7 +19,18 @@ class AF_Packet(ZeekControl.plugin.Plugin):
 		return False
 
 	def nodeKeys(self):
-		return ["fanout_id", "fanout_mode", "buffer_size"]
+		return [
+			"buffer_size",
+			"block_size",
+			"block_timeout",
+			"enable_hw_timestamping",
+			"enable_fanout",
+			"enable_defrag",
+			"fanout_mode",
+			"fanout_id",
+			"link_type",
+			"checksum_validation_mode",
+			]
 
 	def zeekctl_config(self):
 		script = ""
@@ -31,12 +42,9 @@ class AF_Packet(ZeekControl.plugin.Plugin):
 
 			params = ""
 
-			if nn.af_packet_fanout_id:
-				params += "\n  redef AF_Packet::fanout_id = %s;" % nn.af_packet_fanout_id
-			if nn.af_packet_fanout_mode:
-				params += "\n  redef AF_Packet::fanout_mode = %s;" % nn.af_packet_fanout_mode
-			if nn.af_packet_buffer_size:
-				params += "\n  redef AF_Packet::buffer_size = %s;" % nn.af_packet_buffer_size
+			for p, v in vars(nn).items():
+				if p.startswith('af_packet_') and v:
+					params += f"\n  redef AF_Packet::{p[10:]} = {v};"
 
 			if params:
 				script += "\n@if( peer_description == \"%s\" ) %s\n@endif" % (nn.name, params)
