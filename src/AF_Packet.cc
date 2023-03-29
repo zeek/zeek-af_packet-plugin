@@ -106,7 +106,7 @@ void AF_PacketSource::Open()
 	Opened(props);
 	}
 
-inline bool AF_PacketSource::BindInterface()
+bool AF_PacketSource::BindInterface()
 	{
 	struct ifreq ifr;
 	struct sockaddr_ll saddr_ll;
@@ -128,7 +128,7 @@ inline bool AF_PacketSource::BindInterface()
 	return (ret >= 0);
 	}
 
-inline bool AF_PacketSource::EnablePromiscMode()
+bool AF_PacketSource::EnablePromiscMode()
 	{
 	struct ifreq ifr;
 	struct packet_mreq mreq;
@@ -149,7 +149,7 @@ inline bool AF_PacketSource::EnablePromiscMode()
 	return (ret >= 0);
 	}
 
-inline bool AF_PacketSource::ConfigureFanoutGroup(bool enabled, bool defrag)
+bool AF_PacketSource::ConfigureFanoutGroup(bool enabled, bool defrag)
 	{
 	if ( enabled )
 		{
@@ -168,7 +168,7 @@ inline bool AF_PacketSource::ConfigureFanoutGroup(bool enabled, bool defrag)
 	return true;
 	}
 
-inline bool AF_PacketSource::ConfigureHWTimestamping(bool enabled)
+bool AF_PacketSource::ConfigureHWTimestamping(bool enabled)
 	{
 	if ( enabled )
 		{
@@ -196,7 +196,7 @@ inline bool AF_PacketSource::ConfigureHWTimestamping(bool enabled)
 	return true;
 	}
 
-inline uint32_t AF_PacketSource::GetFanoutMode(bool defrag)
+uint32_t AF_PacketSource::GetFanoutMode(bool defrag)
 	{
 	uint32_t fanout_mode;
 
