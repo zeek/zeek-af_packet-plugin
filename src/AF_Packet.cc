@@ -35,6 +35,10 @@ AF_PacketSource::AF_PacketSource(const std::string& path, bool is_live)
 	props.path = path;
 	props.is_live = is_live;
 
+	interface_flags = 0;
+	interface_ifindex = -1;
+	is_loopback = false;
+
 	socket_fd = -1;
 	rx_ring = nullptr;
 
@@ -57,6 +61,23 @@ void AF_PacketSource::Open()
 	if ( socket_fd < 0 )
 		{
 		Error(errno ? strerror(errno) : "unable to create socket");
+		return;
+		}
+
+	// QueryInterface will log an appropriate error and return false.
+	if ( ! QueryInterface() )
+		{
+		Error(errno ? strerror(errno) : "unable to query interface");
+		close(socket_fd);
+		socket_fd = -1;
+		return;
+		}
+
+	if ( ! IsInterfaceUp() )
+		{
+		Error("interface is down");
+		close(socket_fd);
+		socket_fd = -1;
 		return;
 		}
 
@@ -109,10 +130,10 @@ void AF_PacketSource::Open()
 	Opened(props);
 	}
 
-bool AF_PacketSource::BindInterface()
+// Get ifindex and ifr_flags props.path.
+bool AF_PacketSource::QueryInterface()
 	{
 	struct ifreq ifr;
-	struct sockaddr_ll saddr_ll;
 	int ret;
 
 	memset(&ifr, 0, sizeof(ifr));
@@ -122,10 +143,35 @@ bool AF_PacketSource::BindInterface()
 	if ( ret < 0 )
 		return false;
 
+	interface_ifindex = ifr.ifr_ifindex;
+
+	ret = ioctl(socket_fd, SIOCGIFFLAGS, &ifr);
+	if ( ret < 0 )
+		return false;
+
+	interface_flags = ifr.ifr_flags;
+	is_loopback = interface_flags & IFF_LOOPBACK;
+
+	// std::fprintf(stderr, "AF_Packet: ifindex=%d ifr_flags=%0x is_loopback=%d\n",
+	//              interface_ifindex, interface_flags, is_loopback);
+
+	return true;
+	}
+
+bool AF_PacketSource::IsInterfaceUp()
+	{
+		return interface_flags & IFF_UP;
+	}
+
+bool AF_PacketSource::BindInterface()
+	{
+	struct sockaddr_ll saddr_ll;
+	int ret;
+
 	memset(&saddr_ll, 0, sizeof(saddr_ll));
 	saddr_ll.sll_family = AF_PACKET;
 	saddr_ll.sll_protocol = htons(ETH_P_ALL);
-	saddr_ll.sll_ifindex = ifr.ifr_ifindex;
+	saddr_ll.sll_ifindex = interface_ifindex;
 
 	ret = bind(socket_fd, (struct sockaddr *) &saddr_ll, sizeof(saddr_ll));
 	return (ret >= 0);
@@ -133,19 +179,11 @@ bool AF_PacketSource::BindInterface()
 
 bool AF_PacketSource::EnablePromiscMode()
 	{
-	struct ifreq ifr;
 	struct packet_mreq mreq;
 	int ret;
 
-	memset(&ifr, 0, sizeof(ifr));
-	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", props.path.c_str());
-
-	ret = ioctl(socket_fd, SIOCGIFINDEX, &ifr);
-	if ( ret < 0 )
-		return false;
-
 	memset(&mreq, 0, sizeof(mreq));
-	mreq.mr_ifindex = ifr.ifr_ifindex;
+	mreq.mr_ifindex = interface_ifindex;
 	mreq.mr_type = PACKET_MR_PROMISC;
 
 	ret = setsockopt(socket_fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mreq, sizeof(mreq));

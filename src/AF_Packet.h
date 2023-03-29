@@ -62,10 +62,17 @@ private:
 	unsigned int num_discarded;
 	int checksum_mode;
 
+	// Cached results of SIOCGIFINDEX and SIOCGIFFLAGS
+	short interface_flags;
+	int interface_ifindex;
+	bool is_loopback;
+
 	int socket_fd;
 	RX_Ring *rx_ring;
 	struct pcap_pkthdr current_hdr;
 
+	bool QueryInterface();
+	bool IsInterfaceUp();
 	bool BindInterface();
 	bool EnablePromiscMode();
 	bool ConfigureFanoutGroup(bool enabled, bool defrag);
