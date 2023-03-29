@@ -292,6 +292,27 @@ bool AF_PacketSource::ExtractNextPacket(zeek::Packet* pkt)
 		if ( ! rx_ring->GetNextPacket(&packet) )
 			return false;
 
+		// If this is a loopback interface and we're seeing an outgoing
+		// packet, drop it as it'll show up as incoming as well. Previously
+		// this would've caused Zeek to see all packets twice on loopback
+		// interfaces when compared to the normal libpcap based souce.
+		//
+		// The tpacket3_hdr is directly followed by a sockaddr_ll structure
+		// from where we can get the OUTGOING information about the packet.
+		//
+		// https://github.com/the-tcpdump-group/libpcap/blob/244080f5f9d4f17340041d1f5a3efd278ff08d7b/pcap-linux.c#L1173-L1181
+		if ( is_loopback )
+			{
+			const struct sockaddr_ll *sll = (struct sockaddr_ll*)
+				((uint8_t *)packet + TPACKET_ALIGN(sizeof(struct tpacket3_hdr)));
+
+			if ( sll->sll_pkttype == PACKET_OUTGOING )
+				{
+				DoneWithPacket();
+				continue;
+				}
+			}
+
 		current_hdr.ts.tv_sec = packet->tp_sec;
 		current_hdr.ts.tv_usec = packet->tp_nsec / 1000;
 		current_hdr.caplen = packet->tp_snaplen;
