@@ -1,5 +1,4 @@
-# Build the plugin against the latest zeekurity/zeek-dev image
-ARG IMAGE=zeekurity/zeek-dev:latest
+ARG IMAGE=zeek/zeek:5.0.7
 FROM $IMAGE
 
 RUN apt-get update && apt-get -y --no-install-recommends install \
