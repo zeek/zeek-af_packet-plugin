@@ -35,6 +35,9 @@ AF_PacketSource::AF_PacketSource(const std::string& path, bool is_live)
 	props.path = path;
 	props.is_live = is_live;
 
+	socket_fd = -1;
+	rx_ring = nullptr;
+
 	checksum_mode = zeek::BifConst::AF_Packet::checksum_validation_mode->AsEnum();
 	}
 
@@ -57,6 +60,24 @@ void AF_PacketSource::Open()
 		return;
 		}
 
+	auto info = GetInterfaceInfo(props.path);
+
+	if ( ! info.Valid() )
+		{
+		Error(errno ? strerror(errno) : "unable to get interface information");
+		close(socket_fd);
+		socket_fd = -1;
+		return;
+		}
+
+	if ( ! info.IsUp() )
+		{
+		Error("interface is down");
+		close(socket_fd);
+		socket_fd = -1;
+		return;
+		}
+
 	// Create RX-ring
 	try {
 		rx_ring = new RX_Ring(socket_fd, buffer_size, block_size, block_timeout_msec);
@@ -67,14 +88,14 @@ void AF_PacketSource::Open()
 	}
 
 	// Setup interface
-	if ( ! BindInterface() )
+	if ( ! BindInterface(info) )
 		{
 		Error(errno ? strerror(errno) : "unable to bind to interface");
 		close(socket_fd);
 		return;
 		}
 
-	if ( ! EnablePromiscMode() )
+	if ( ! EnablePromiscMode(info) )
 		{
 		Error(errno ? strerror(errno) : "unable enter promiscious mode");
 		close(socket_fd);
@@ -106,50 +127,58 @@ void AF_PacketSource::Open()
 	Opened(props);
 	}
 
-inline bool AF_PacketSource::BindInterface()
+AF_PacketSource::InterfaceInfo AF_PacketSource::GetInterfaceInfo(const std::string& path)
 	{
+	AF_PacketSource::InterfaceInfo info;
 	struct ifreq ifr;
-	struct sockaddr_ll saddr_ll;
 	int ret;
 
 	memset(&ifr, 0, sizeof(ifr));
-	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", props.path.c_str());
+	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", path.c_str());
+
+	ret = ioctl(socket_fd, SIOCGIFFLAGS, &ifr);
+	if ( ret < 0 )
+		return info;
+
+	info.flags = ifr.ifr_flags;
 
 	ret = ioctl(socket_fd, SIOCGIFINDEX, &ifr);
 	if ( ret < 0 )
-		return false;
+		return info;
+
+	info.index = ifr.ifr_ifindex;
+
+	return info;
+	}
+
+bool AF_PacketSource::BindInterface(const AF_PacketSource::InterfaceInfo& info)
+	{
+	struct sockaddr_ll saddr_ll;
+	int ret;
 
 	memset(&saddr_ll, 0, sizeof(saddr_ll));
 	saddr_ll.sll_family = AF_PACKET;
 	saddr_ll.sll_protocol = htons(ETH_P_ALL);
-	saddr_ll.sll_ifindex = ifr.ifr_ifindex;
+	saddr_ll.sll_ifindex = info.index;
 
 	ret = bind(socket_fd, (struct sockaddr *) &saddr_ll, sizeof(saddr_ll));
 	return (ret >= 0);
 	}
 
-inline bool AF_PacketSource::EnablePromiscMode()
+bool AF_PacketSource::EnablePromiscMode(const AF_PacketSource::InterfaceInfo& info)
 	{
-	struct ifreq ifr;
 	struct packet_mreq mreq;
 	int ret;
 
-	memset(&ifr, 0, sizeof(ifr));
-	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", props.path.c_str());
-
-	ret = ioctl(socket_fd, SIOCGIFINDEX, &ifr);
-	if ( ret < 0 )
-		return false;
-
 	memset(&mreq, 0, sizeof(mreq));
-	mreq.mr_ifindex = ifr.ifr_ifindex;
+	mreq.mr_ifindex = info.index;
 	mreq.mr_type = PACKET_MR_PROMISC;
 
 	ret = setsockopt(socket_fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
 	return (ret >= 0);
 	}
 
-inline bool AF_PacketSource::ConfigureFanoutGroup(bool enabled, bool defrag)
+bool AF_PacketSource::ConfigureFanoutGroup(bool enabled, bool defrag)
 	{
 	if ( enabled )
 		{
@@ -168,7 +197,7 @@ inline bool AF_PacketSource::ConfigureFanoutGroup(bool enabled, bool defrag)
 	return true;
 	}
 
-inline bool AF_PacketSource::ConfigureHWTimestamping(bool enabled)
+bool AF_PacketSource::ConfigureHWTimestamping(bool enabled)
 	{
 	if ( enabled )
 		{
@@ -196,7 +225,7 @@ inline bool AF_PacketSource::ConfigureHWTimestamping(bool enabled)
 	return true;
 	}
 
-inline uint32_t AF_PacketSource::GetFanoutMode(bool defrag)
+uint32_t AF_PacketSource::GetFanoutMode(bool defrag)
 	{
 	uint32_t fanout_mode;
 
@@ -227,12 +256,14 @@ inline uint32_t AF_PacketSource::GetFanoutMode(bool defrag)
 
 void AF_PacketSource::Close()
 	{
-	if ( ! socket_fd )
+	if ( socket_fd < 0 )
 		return;
 
 	delete rx_ring;
+	rx_ring = nullptr;
+
 	close(socket_fd);
-	socket_fd = 0;
+	socket_fd = -1;
 
 	Closed();
 	}
