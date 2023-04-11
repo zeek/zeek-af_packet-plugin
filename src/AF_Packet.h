@@ -72,6 +72,7 @@ private:
 
 		bool Valid () { return index >= 0; }
 		bool IsUp() { return flags & IFF_UP; }
+		bool IsLoopback() { return flags & IFF_LOOPBACK; };
 	};
 
 	InterfaceInfo GetInterfaceInfo(const std::string& path);

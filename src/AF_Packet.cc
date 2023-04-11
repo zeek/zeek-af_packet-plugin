@@ -12,6 +12,7 @@
 #include "RX_Ring.h"
 
 #include "af_packet.bif.h"
+#include "zeek/Reporter.h"
 
 // CentOS 7 if_packet.h does not yet have this define, provide it
 // explicitly if missing.
@@ -76,6 +77,19 @@ void AF_PacketSource::Open()
 		close(socket_fd);
 		socket_fd = -1;
 		return;
+		}
+
+	if ( info.IsLoopback() )
+		{
+		zeek::reporter->Warning("AF_Packet: %s is a loopback interface! Using the native "
+		                        "AF_PACKET packet source with a loopback interface is unsupported. "
+		                        "Zeek will receive each packet twice and detect re-transmissions and "
+		                        "other anomalies as well as report double the amount of packets and "
+		                        "bytes when compared to libpcap based tools like tcpdump or Wireshark. "
+		                        "Consider using Zeeks's default libpcap based packet source for "
+		                        "loopback monitoring instead.",
+		                        props.path.c_str());
+
 		}
 
 	// Create RX-ring
