@@ -92,6 +92,8 @@ If all interfaces using `lb_method=custom` should be configured for AF_Packet, t
 
     lb_custom.InterfacePrefix=af_packet::
 
+Note that all configuration options described in the [configuration section](#advanced-configuration) can be set via `zeekctl`. The key is formed by prepending `af_packet_` to the option name.
+
 ## Advanced Configuration
 
 While the plugin aims at providing a "plug and play" user experience, it exposes several configuration options of the underlying API for customization (see [init.zeek](scripts/init.zeek) for the default values):
