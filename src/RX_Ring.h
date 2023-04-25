@@ -1,12 +1,11 @@
 // See the file "COPYING" in the main distribution directory for copyright.
 
-#ifndef IOSOURCE_PKTSRC_RX_RING_H
-#define IOSOURCE_PKTSRC_RX_RING_H
+#pragma once
 
 extern "C" {
 #include <linux/if_packet.h> // AF_PACKET, etc.
 }
-#include <stdint.h>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 
@@ -43,5 +42,3 @@ private:
 	uint8_t* ring;
 	size_t size;
 };
-
-#endif
