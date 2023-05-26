@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zeekver: [zeek, zeek-lts, zeek-nightly]
+        zeekver: [zeek, zeek-lts]
     steps:
       - uses: actions/checkout@v3
       - uses: zeek/action-zkg-install@v2
