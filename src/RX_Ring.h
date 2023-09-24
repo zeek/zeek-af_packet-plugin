@@ -33,7 +33,6 @@ protected:
 
 private:
 	struct tpacket_req3 layout;
-	struct tpacket_block_desc** blocks;
 	struct tpacket3_hdr* packet;
 
 	unsigned int block_num;
@@ -41,4 +40,9 @@ private:
 
 	uint8_t* ring;
 	size_t size;
+
+	// Return a pointer to the tpacket_block_desc of block num.
+	struct tpacket_block_desc* get_block_desc_ptr(unsigned int num) {
+		return (struct tpacket_block_desc*)(ring + num * layout.tp_block_size);
+	}
 };

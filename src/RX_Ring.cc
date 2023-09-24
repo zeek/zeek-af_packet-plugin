@@ -38,28 +38,21 @@ RX_Ring::RX_Ring(int sock, size_t bufsize, size_t blocksize, int blocktimeout_ms
 
 	block_num = packet_num = 0;
 	packet = NULL;
-
-	// Init block mapping
-	blocks = new tpacket_block_desc*[layout.tp_block_nr];
-	for ( unsigned int i = 0; i < layout.tp_block_nr; i++ )
-		blocks[i] = (struct tpacket_block_desc *)(ring +
-			i * layout.tp_block_size);
 	}
 
 RX_Ring::~RX_Ring()
 	{
 	ReleasePacket();
 
-	delete[] blocks;
 	munmap(ring, size);
 
-	blocks = 0;
 	size = 0;
 	}
 
 bool RX_Ring::GetNextPacket(tpacket3_hdr** hdr)
 	{
-	struct tpacket_hdr_v1 *block_hdr = &(blocks[block_num]->hdr.bh1);
+	struct tpacket_block_desc *const block_desc = get_block_desc_ptr(block_num);
+	struct tpacket_hdr_v1 *const block_hdr = &block_desc->hdr.bh1;
 
 	if ( (block_hdr->block_status & TP_STATUS_USER) == 0 )
 		return false;
@@ -74,7 +67,7 @@ bool RX_Ring::GetNextPacket(tpacket3_hdr** hdr)
 			return false;
 			}
 		packet = (struct tpacket3_hdr *)
-			((uint8_t *) blocks[block_num] + block_hdr->offset_to_first_pkt);
+			((uint8_t *) block_desc + block_hdr->offset_to_first_pkt);
 		}
 	else
 		// Continue with block
@@ -104,9 +97,8 @@ void RX_Ring::InitLayout(size_t bufsize, size_t blocksize, int blocktimeout_msec
 
 void RX_Ring::NextBlock()
 	{
-	struct tpacket_hdr_v1 *block_hdr = &(blocks[block_num]->hdr.bh1);
-
-	block_hdr->block_status = TP_STATUS_KERNEL;
-	block_num = (block_num +1) % layout.tp_block_nr;
+	struct tpacket_block_desc *const block_desc = get_block_desc_ptr(block_num);
+	block_desc->hdr.bh1.block_status = TP_STATUS_KERNEL;
+	block_num = (block_num + 1) % layout.tp_block_nr;
 	packet = NULL;
 	}
