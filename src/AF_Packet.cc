@@ -8,6 +8,7 @@
 #include "zeek/zeek-version.h"
 #endif
 
+#include "zeek/util.h"
 #include "AF_Packet.h"
 #include "RX_Ring.h"
 
@@ -20,6 +21,7 @@
 #endif
 
 using namespace zeek::iosource::pktsrc;
+using namespace zeek::util;
 
 AF_PacketSource::~AF_PacketSource()
 	{
@@ -51,6 +53,10 @@ void AF_PacketSource::Open()
 	bool enable_hw_timestamping = zeek::BifConst::AF_Packet::enable_hw_timestamping;
 	bool enable_fanout = zeek::BifConst::AF_Packet::enable_fanout;
 	bool enable_defrag = zeek::BifConst::AF_Packet::enable_defrag;
+	std::string ebpf_lb_file;
+	ebpf_lb_file.assign( 
+		(const char*) BifConst::AF_Packet::ebpf_lb_file->Bytes(), 
+		BifConst::AF_Packet::ebpf_lb_file->Len());
 
 	socket_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 
@@ -105,6 +111,13 @@ void AF_PacketSource::Open()
 	if ( ! ConfigureFanoutGroup(enable_fanout, enable_defrag) )
 		{
 		Error(errno ? strerror(errno) : "failed to join fanout group");
+		close(socket_fd);
+		return;
+		}
+
+	if ( ! ConfigureFanoutLoadBalancer(ebpf_lb_file.c_str()) )
+		{
+		Error(errno ? strerror(errno) : "failed to load ebpf lb file");
 		close(socket_fd);
 		return;
 		}
@@ -195,6 +208,72 @@ bool AF_PacketSource::ConfigureFanoutGroup(bool enabled, bool defrag)
 			return false;
 		}
 	return true;
+	}
+
+bool AF_PacketSource::ConfigureFanoutLoadBalancer(const char* ebpf_lb_file)
+	{
+	if ( !ebpf_lb_file || !ebpf_lb_file[0] )
+		{
+		int fd = 0;
+		if ( !LoadEBPFLoadBalanceFile(ebpf_lb_file, fd) )
+			return false;
+		
+		int ret = setsockopt(socket_fd, SOL_PACKET, PACKET_FANOUT_DATA, &fd, sizeof(fd));
+		if ( ret < 0 )
+			return false;
+		}
+	return true;
+	}
+
+bool AF_PacketSource::LoadEBPFLoadBalanceFile(const char* ebpf_lb_file, int& fd)
+	{
+	// error reporting depends on errno from syscall
+    // Sending the eBPF code to the kernel requires a large amount of
+    //locked memory so we set it to unlimited to avoid a ENOPERM error */
+    struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
+    if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) 
+		{
+        Error(fmt("Unable to lock memory: %s (%d)", strerror(errno), errno));
+        return false;
+		}
+    auto bpfobj = bpf_object__open(ebpf_lb_file);
+    char err_buf[128];
+	if( !bpfobj )
+		{
+	    long error = libbpf_get_error(bpfobj);
+        libbpf_strerror(error, err_buf, sizeof(err_buf));
+        Error(fmt("Unable to load eBPF objects in '%s': %s", ebpf_lb_file, err_buf));
+        return false;
+		}
+	auto bpfprog = FindProgramInSection(bpfobj, "loadbalancer");
+	if ( !bpfprog )
+		{
+		Error(fmt("Unable to find the program in loadbalancer section"));
+		return false;
+		}
+	bpf_program__set_type(bpfprog, BPF_PROG_TYPE_SOCKET_FILTER);
+	int err = bpf_object__load(bpfobj);
+	if( !err)
+		{
+	    long error = libbpf_get_error(bpfobj);
+        libbpf_strerror(error, err_buf, sizeof(err_buf));
+        Error(fmt("Unable to load eBPF objects in '%s': %s", ebpf_lb_file, err_buf));
+        return false;
+		}
+	fd = bpf_program__fd(bpfprog);
+	return true;
+	}
+
+struct bpf_program *AF_PacketSource::FindProgramInSection(struct bpf_object* bpfobj, const char* section)
+	{
+	struct bpf_program *bpfprog = NULL;
+	bpf_object__for_each_program(bpfprog, bpfobj)
+		{
+		const char* aSection = bpf_program__section_name(bpfprog);
+		if ( !strcmp(section, aSection) )
+			return bpfprog;
+		}
+	return NULL;
 	}
 
 bool AF_PacketSource::ConfigureHWTimestamping(bool enabled)

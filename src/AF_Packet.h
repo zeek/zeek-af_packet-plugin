@@ -15,10 +15,12 @@ extern "C" {
 #include <linux/if_packet.h>   // AF_PACKET, etc.
 #include <linux/sockios.h>     // SIOCSHWTSTAMP
 #include <linux/net_tstamp.h>  // hwtstamp_config
-#include <pcap.h>
 }
-
+#define bpf_insn pcap_bpf_insn
 #include "zeek/iosource/PktSrc.h"
+#undef bpf_insn
+
+#include <bpf/libbpf.h>
 #include "RX_Ring.h"
 
 namespace zeek::iosource::pktsrc {
@@ -77,6 +79,9 @@ private:
 	bool BindInterface(const InterfaceInfo& info);
 	bool EnablePromiscMode(const InterfaceInfo& info);
 	bool ConfigureFanoutGroup(bool enabled, bool defrag);
+	bool ConfigureFanoutLoadBalancer(const char* ebpf_lb_file);
+	bool LoadEBPFLoadBalanceFile(const char* ebpf_lb_file, int& fd);
+	struct bpf_program *FindProgramInSection(struct bpf_object* bpfobj, const char* section);
 	bool ConfigureHWTimestamping(bool enabled);
 	uint32_t GetFanoutMode(bool defrag);
 };

@@ -31,5 +31,6 @@ const enable_defrag: bool;
 const enable_fanout: bool;
 const fanout_mode: FanoutMode;
 const fanout_id: count;
+const ebpf_lb_file: string;
 const link_type: count;
 const checksum_validation_mode: ChecksumMode;
