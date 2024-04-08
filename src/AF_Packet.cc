@@ -212,7 +212,7 @@ bool AF_PacketSource::ConfigureFanoutGroup(bool enabled, bool defrag)
 
 bool AF_PacketSource::ConfigureFanoutLoadBalancer(const char* ebpf_lb_file)
 	{
-	if ( !ebpf_lb_file || !ebpf_lb_file[0] )
+	if ( ebpf_lb_file != NULL && ebpf_lb_file[0] != 0 )
 		{
 		int fd = 0;
 		if ( !LoadEBPFLoadBalanceFile(ebpf_lb_file, fd) )
@@ -253,7 +253,7 @@ bool AF_PacketSource::LoadEBPFLoadBalanceFile(const char* ebpf_lb_file, int& fd)
 		}
 	bpf_program__set_type(bpfprog, BPF_PROG_TYPE_SOCKET_FILTER);
 	int err = bpf_object__load(bpfobj);
-	if( !err)
+	if( err != 0)
 		{
 	    long error = libbpf_get_error(bpfobj);
         libbpf_strerror(error, err_buf, sizeof(err_buf));
