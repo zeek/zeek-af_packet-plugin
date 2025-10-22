@@ -1,3 +1,7 @@
+NOTE: This plugin was moved to be part of Zeek as of version 5.2. This repository is now
+archived for historical reasons. Any new work to the plugin will happen in the Zeek
+repository itself, and any issues with it should be filed there.
+
 
 # Zeek::AF_Packet
 
